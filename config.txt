@@ -1,9 +1,10 @@
 {
 "app_id": "wx771e27e1d6bf836a",
 "app_secret": "c301dbf3ee44dfeb15be8c3592edb775",
-"template_id": "-35yR-CE9KnjUjgYfPn2OGaEsKWrRnKzvrLDQEmJW7w",
+"template_id": "j9hI_-p2A3gml_SxHA1O-Ab-BIVmscjceuQLzuj_tZY",
 # 接收公众号消息的微信号，如果有多个，需要在[]里用英文逗号间隔，例如["wx1", "wx2"]
 "user": ["oibOK6AcHanA4KqtQKAh4GQMeqE0"],
+#"user": ["oibOK6AcHanA4KqtQKAh4GQMeqE0", "oibOK6O_MfkfxiTHoQ9lBhNr1rEs"],
 "province": "江西",
 "city": "南昌",
 "love_date": "2021-04-17"

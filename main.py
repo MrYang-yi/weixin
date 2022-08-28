@@ -37,21 +37,17 @@ def get_weather(province, city):
     # 毫秒级时间戳
     t = (int(round(time() * 1000)))
     headers = {
-        "Referer": "http://www.weather.com.cn",
+        "Referer": "http://www.weather.com.cn/weather1d/{}.shtml".format(city_id),
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
                       'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36'
     }
-    url = "http://d1.weather.com.cn/weather_index/{}.html?_={}".format(city_id, t)
+
+    url = "http://d1.weather.com.cn/dingzhi/{}.html?_={}".format(city_id, t)
     response = get(url, headers=headers)
     response.encoding = "utf-8"
 
-    response_data_0 = eval(re.findall("var cityDZ =(.*?);var", response.text)[0])
-    response_data_2 = eval(re.findall("var dataSK =(.*?);var", response.text)[0])
-    response_data_3 = eval(re.findall("var dataZS =(.*?);var", response.text)[0])
+    response_data_0 = eval(re.findall("var cityDZ101240101 =(.*?);var", response.text)[0])
 
-    response_data = response.text.split(";")[0].split("=")[-1]
-    response_json = eval(response_data)
-    # print(response_json)
     weatherinfo = response_data_0["weatherinfo"]
     # 天气
     weather = weatherinfo["weather"]
@@ -59,6 +55,11 @@ def get_weather(province, city):
     temp = weatherinfo["temp"]
     # 最低气温
     tempn = weatherinfo["tempn"]
+
+    url = "http://d1.weather.com.cn/weather_index/{}.html?_={}".format(city_id, t)
+    response = get(url, headers=headers)
+    response.encoding = "utf-8"
+    response_data_3 = eval(re.findall("var dataZS =(.*?);var", response.text)[0])
     # 生活指数
     zs = response_data_3['zs']
     tips = '\n晨练' + zs['cl_hint'] + ':' + zs['cl_des_s'] + '\n穿衣小贴士:' + zs['ct_des_s']
