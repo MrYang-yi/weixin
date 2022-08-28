@@ -6,6 +6,7 @@ from datetime import datetime, date
 from zhdate import ZhDate
 import sys
 import os
+import re
 
 
 def get_color():
@@ -16,19 +17,11 @@ def get_color():
 
 
 def get_access_token():
-    # appId
     app_id = config["app_id"]
-    # appSecret
     app_secret = config["app_secret"]
-    post_url = ("https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid={}&secret={}"
-                .format(app_id, app_secret))
-    try:
-        access_token = get(post_url).json()['access_token']
-    except KeyError:
-        print("获取access_token失败，请检查app_id和app_secret是否正确")
-        os.system("pause")
-        sys.exit(1)
-    # print(access_token)
+    post_url = ("https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid={}&secret={}".format(app_id,
+                                                                                                                 app_secret))
+    access_token = get(post_url).json()['access_token']
     return access_token
 
 
@@ -44,24 +37,33 @@ def get_weather(province, city):
     # 毫秒级时间戳
     t = (int(round(time() * 1000)))
     headers = {
-        "Referer": "http://www.weather.com.cn/weather1d/{}.shtml".format(city_id),
+        "Referer": "http://www.weather.com.cn",
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
                       'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36'
     }
-    url = "http://d1.weather.com.cn/dingzhi/{}.html?_={}".format(city_id, t)
+    url = "http://d1.weather.com.cn/weather_index/{}.html?_={}".format(city_id, t)
     response = get(url, headers=headers)
     response.encoding = "utf-8"
+
+    response_data_0 = eval(re.findall("var cityDZ =(.*?);var", response.text)[0])
+    response_data_2 = eval(re.findall("var dataSK =(.*?);var", response.text)[0])
+    response_data_3 = eval(re.findall("var dataZS =(.*?);var", response.text)[0])
+
     response_data = response.text.split(";")[0].split("=")[-1]
     response_json = eval(response_data)
     # print(response_json)
-    weatherinfo = response_json["weatherinfo"]
+    weatherinfo = response_data_0["weatherinfo"]
     # 天气
     weather = weatherinfo["weather"]
     # 最高气温
     temp = weatherinfo["temp"]
     # 最低气温
     tempn = weatherinfo["tempn"]
-    return weather, temp, tempn
+    # 生活指数
+    zs = response_data_3['zs']
+    tips = '\n晨练' + zs['cl_hint'] + ':' + zs['cl_des_s'] + '\n穿衣小贴士:' + zs['ct_des_s']
+    return weather, temp, tempn, tips
+
 
 def get_ciba():
     url = "http://open.iciba.com/dsapi/"
@@ -76,7 +78,7 @@ def get_ciba():
     return note_ch, note_en
 
 
-def send_message(to_user, access_token, city_name, weather, max_temperature, min_temperature, note_ch, note_en):
+def send_message(to_user, access_token, city_name, weather, max_temperature, min_temperature, tips, note_ch, note_en):
     url = "https://api.weixin.qq.com/cgi-bin/message/template/send?access_token={}".format(access_token)
     week_list = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"]
     year = localtime().tm_year
@@ -115,6 +117,10 @@ def send_message(to_user, access_token, city_name, weather, max_temperature, min
             },
             "max_temperature": {
                 "value": max_temperature,
+                "color": get_color()
+            },
+            "tips": {
+                "value": tips,
                 "color": get_color()
             },
             "love_day": {
@@ -168,10 +174,10 @@ if __name__ == "__main__":
     users = config["user"]
     # 传入省份和市获取天气信息
     province, city = config["province"], config["city"]
-    weather, max_temperature, min_temperature = get_weather(province, city)
+    weather, max_temperature, min_temperature, tips = get_weather(province, city)
     # 获取词霸每日金句
     note_ch, note_en = get_ciba()
     # 公众号推送消息
     for user in users:
-        send_message(user, accessToken, city, weather, max_temperature, min_temperature, note_ch, note_en)
+        send_message(user, accessToken, city, weather, max_temperature, min_temperature, tips, note_ch, note_en)
     os.system("pause")
